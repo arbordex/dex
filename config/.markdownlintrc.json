@@ -1,0 +1,11 @@
+{
+  "default": true,
+  "ignores": ["LICENSE"],
+  "MD013": {
+    "line_length": 120
+  },
+  "MD029": false,
+  "MD040": false,
+  "MD060": false,
+  "MD036": false
+}

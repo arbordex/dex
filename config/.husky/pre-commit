@@ -1,0 +1,14 @@
+#!/bin/sh
+# Git pre-commit hook - Runs linting on staged files before commit
+# Prevents committing code that violates style rules
+# 
+# This hook:
+# 1. Lints TypeScript/JavaScript files with ESLint
+# 2. Validates Markdown files with markdownlint
+# 3. Auto-fixes formatting issues where possible
+# 
+# Configure staged file patterns in package.json under "lint-staged"
+# shellcheck source=/dev/null
+. "$(dirname "$0")/_/husky.sh"
+
+npx lint-staged

@@ -1,0 +1,64 @@
+{
+  "name": "arbordex",
+  "version": "1.0.0",
+  "description": "A modular, educational DEX server that helps developers understand how AMMs (Automated Market Makers) and DeFi actually work. No complexity overload, just the essentials.",
+  "private": true,
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node config/scripts/start.js",
+    "dev": "tsx watch --project config/tsconfig.json src/index.ts",
+    "build": "tsc --project config/tsconfig.json",
+    "start:prod": "NODE_ENV=production node dist/src/index.js",
+    "start:staging": "NODE_ENV=staging node dist/src/index.js",
+    "start:built": "npm run build && npm run start:prod",
+    "lint": "eslint . --ext .ts,.js",
+    "lint:fix": "eslint . --ext .ts,.js --fix",
+    "test": "tsx tests/api.test.ts",
+    "prepare": "husky install config/.husky"
+  },
+  "keywords": [
+    "dex",
+    "amm",
+    "defi",
+    "swap",
+    "education",
+    "server",
+    "express",
+    "protocol",
+    "learning",
+    "modular"
+  ],
+  "author": "",
+  "license": "Apache-2.0",
+  "homepage": "https://github.com/arbordex/dex",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/arbordex/dex.git"
+  },
+  "dependencies": {
+    "@types/express": "^5.0.6",
+    "express": "^5.2.1"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.0.0",
+    "@types/node": "^20.19.25",
+    "@typescript-eslint/eslint-plugin": "^8.0.0",
+    "@typescript-eslint/parser": "^8.0.0",
+    "eslint": "^9.0.0",
+    "husky": "^9.0.0",
+    "lint-staged": "^15.0.0",
+    "markdownlint-cli": "^0.46.0",
+    "tsx": "^4.0.0",
+    "typescript": "^5.0.0"
+  },
+  "lint-staged": {
+    "*.{ts,js}": "eslint --fix"
+  },
+  "eslintConfig": {
+    "root": true,
+    "extends": [
+      "./config/eslint.config.js"
+    ]
+  }
+}
