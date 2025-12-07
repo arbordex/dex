@@ -3,6 +3,7 @@
  * Loads and validates environment variables
  */
 
+
 export type Environment = 'development' | 'staging' | 'production';
 
 export interface Config {

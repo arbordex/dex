@@ -7,8 +7,8 @@
   "type": "module",
   "scripts": {
     "start": "node config/scripts/start.js",
-    "dev": "tsx watch --project config/tsconfig.json src/index.ts",
-    "build": "tsc --project config/tsconfig.json",
+    "dev": "tsx watch --project tsconfig.json src/index.ts",
+    "build": "tsc --project tsconfig.json",
     "start:prod": "NODE_ENV=production node dist/src/index.js",
     "start:staging": "NODE_ENV=staging node dist/src/index.js",
     "start:built": "npm run build && npm run start:prod",
@@ -54,11 +54,5 @@
   },
   "lint-staged": {
     "*.{ts,js}": "eslint --fix"
-  },
-  "eslintConfig": {
-    "root": true,
-    "extends": [
-      "./config/eslint.config.js"
-    ]
   }
 }

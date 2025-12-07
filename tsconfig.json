@@ -1,9 +1,10 @@
 {
   // Visit https://aka.ms/tsconfig to read more about this file
+  // Visit https://aka.ms/tsconfig to read more about this file
   "compilerOptions": {
     // File Layout
-    "rootDir": "../",
-    "outDir": "../dist",
+    "rootDir": "./",
+    "outDir": "./dist",
 
     // Environment Settings
     // Using 'bundler' moduleResolution with ESNext target
@@ -11,7 +12,7 @@
     "module": "ESNext",
     "moduleResolution": "bundler",
     "target": "esnext",
-    "types": [],
+    "types": ["node"],
 
     // Other Outputs
     "sourceMap": true,
@@ -39,6 +40,6 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true
   },
-  "include": ["../src/**/*", "../tests/**/*"],
-  "exclude": ["../node_modules", "../dist"]
+  "include": ["src/**/*", "tests/**/*"],
+  "exclude": ["node_modules", "dist"]
 }
