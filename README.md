@@ -58,17 +58,21 @@ npm start
 
 You'll see the server running at `http://localhost:3000`.
 
-Don't need to configure anything. Sensible defaults are built in. But if you want to, copy `config/.env.example` to `.env` and update values as needed. All variables have defaults, so you only change what you need.
+Don't need to configure anything. Sensible defaults are built in. But if you want to, copy `.env.example` to `.env` and update values as needed. All variables have defaults, so you only change what you need.
 
 ## Configuration
 
-All configuration lives in `config/` directory:
+Key configuration lives at the repo root for editor auto-detection:
 
 - **`.env` / `.env.example`**: Environment variables (port, host, NODE_ENV, etc.)
 - **`tsconfig.json`**: TypeScript compiler settings with strict mode and bundler module resolution
 - **`eslint.config.js`**: Code style rules (auto-enforced on commit)
 - **`.markdownlintrc.json`**: Documentation linting rules
-- **`scripts/start.js`**: Smart startup script that detects your environment based on `NODE_ENV` and sets behavior
+
+Supporting scripts and hooks stay grouped in `config/`:
+
+- **`config/scripts/start.js`**: Smart startup script that detects your environment based on `NODE_ENV` and sets behavior
+- **`config/.husky/`**: Git hooks (auto-lints on commit)
 
 TypeScript uses bundler module resolution, which means you can import `.ts` files directly in your source code without writing `.js` extensions. The build and runtime handle it transparently.
 
@@ -99,13 +103,15 @@ src/                    # Your actual code lives here
 tests/                  # Tests go here
 ├── api.test.ts        # Basic API tests
 
-config/                 # All configuration in one place
-├── .env.example       # Environment variables template
+.env.example            # Environment variables template
+tsconfig.json           # TypeScript config
+eslint.config.js        # Code style rules
+.markdownlintrc.json    # Markdown lint rules
+
+config/                 # Helper scripts and hooks
 ├── .husky/            # Git hooks (auto-lints on commit)
-├── tsconfig.json      # TypeScript config
-├── eslint.config.js   # Code style rules
 └── scripts/
-    └── start.js       # Smart start script that picks dev/prod
+  └── start.js       # Smart start script that picks dev/prod
 ```
 
 The idea is simple:

@@ -200,7 +200,7 @@ async function testYourFeature(): Promise<void> {
 If your changes affect how users interact with the project, update:
 
 - `README.md` - Main documentation
-- `config/.env.example` - If you add environment variables
+- `.env.example` - If you add environment variables
 
 ### Commit Message Guidelines
 
@@ -333,7 +333,7 @@ See **[README.md](README.md#-commit-convention)** for full details and more exam
 
 ### Adding Configuration
 
-1. Add to `config/.env.example` with clear documentation
+1. Add to `.env.example` with clear documentation
 2. Update `src/config.ts` to read and validate the variable
 3. Document defaults and valid values in the example file
 
