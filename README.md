@@ -137,17 +137,404 @@ No dotfiles scattered everywhere.
 
 ## The API
 
+### What is an AMM (Automated Market Maker)?
+
+Before diving into the API, let's understand what you're interacting with.
+
+A **DEX (Decentralized Exchange)** is like a vending machine for crypto. Instead of a person deciding prices, a mathematical formula does:
+
+```
+x * y = k
+
+Where:
+  x = ETH reserve (how much ETH is in the pool)
+  y = USDC reserve (how much USDC is in the pool)
+  k = constant (never changes)
+```
+
+**How it works:**
+- Pool starts with 1000 ETH and 1000 USDC (k = 1,000,000)
+- You want to swap 10 ETH for USDC
+- Pool's ETH becomes 1010
+- To keep k constant, USDC must become 1,000,000 ÷ 1010 ≈ 990.1
+- You get ~9.9 USDC (less than 1:1 price due to "price impact")
+- The difference is the "price impact" – your trade moved the price slightly
+
+**Key concepts:**
+
+| Term | Meaning | Example |
+|------|---------|---------|
+| **Swap** | Exchange one token for another | Trade ETH for USDC |
+| **Liquidity** | Tokens in the pool that enable trades | 1000 ETH + 1000 USDC = liquidity |
+| **LP Share** | Proof of ownership in the pool | You own 1% of pool = get 1% of fees |
+| **Price Impact** | How much your swap moves the price | 5% impact = you get 5% less than spot price |
+| **Slippage** | Price change between quote and execution | You expect 10 USDC, get 9.5 = 5% slippage |
+| **Fee** | Percentage charged on swaps | 0.3% of input goes to LPs |
+
 ### Endpoints
 
-The endpoints are intentionally small and focused so they’re easy to evolve as the DEX design matures:
+The endpoints form the complete lifecycle of a DEX user:
 
-```text
-GET /               # Health check, says hello
-POST /add-liquidity # Add liquidity to a pool
-POST /buy           # Buy tokens via swap
-POST /sell          # Sell tokens via swap
-POST /quote         # Get a quote for a swap
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `/` | GET | Health check and endpoint list |
+| `/pool/info` | GET | View current pool state (reserves, shares, K) |
+| `/pool/price` | GET | Get current ETH/USDC price |
+| `/quote` | POST | Get expected output for a swap (no execution) |
+| `/buy` | POST | Swap ETH → USDC (execute) |
+| `/sell` | POST | Swap USDC → ETH (execute) |
+| `/add-liquidity` | POST | Deposit tokens, receive LP shares (earn fees) |
+| `/remove-liquidity` | POST | Burn LP shares, withdraw tokens |
+
+### API Reference
+
+#### GET /pool/info
+
+Get the current state of the liquidity pool.
+
+**Response:**
+```json
+{
+  "ethReserve": 1000000,
+  "usdcReserve": 1000000,
+  "totalShares": 1000000,
+  "k": 1000000000000,
+  "accumulatedFees": {
+    "eth": 0.5,
+    "usdc": 12.3
+  }
+}
 ```
+
+**What it means:**
+- `ethReserve` / `usdcReserve`: How many tokens are in the pool
+- `totalShares`: Total LP ownership units in circulation
+- `k`: Constant product (increases as fees accumulate)
+- `accumulatedFees`: Total fees collected (belongs to all LPs proportionally)
+
+**Example:**
+```bash
+curl http://localhost:3000/pool/info
+```
+
+---
+
+#### GET /pool/price
+
+Get the current spot price of ETH in terms of USDC.
+
+**Response:**
+```json
+{
+  "ethPriceInUsdc": 1.5,
+  "interpretation": "1 ETH = 1.5 USDC"
+}
+```
+
+**What it means:**
+- Spot price is the price at which a small swap would execute
+- Formula: `price = USDC reserve / ETH reserve`
+- Larger swaps get worse prices due to price impact
+
+**Example:**
+```bash
+curl http://localhost:3000/pool/price
+```
+
+---
+
+#### POST /quote
+
+Get a quote for a swap WITHOUT executing it.
+
+**Request:**
+```json
+{
+  "inputToken": "ETH",
+  "outputToken": "USDC",
+  "amount": 10,
+  "slippageTolerance": 0.005
+}
+```
+
+**Response:**
+```json
+{
+  "inputToken": "ETH",
+  "outputToken": "USDC",
+  "inputAmount": 10,
+  "fee": 0.03,
+  "amountAfterFee": 9.97,
+  "expectedOutput": 9.97,
+  "priceImpact": 0.003,
+  "slippageTolerance": 0.5,
+  "minimumOutput": 9.915,
+  "message": "Expected 9.97 USDC for 10 ETH, accept minimum 9.915"
+}
+```
+
+**What it means:**
+- `fee`: 0.3% of input goes to liquidity providers
+- `expectedOutput`: What you'd get at current prices
+- `priceImpact`: How much worse than spot price (0.3% = bad execution)
+- `minimumOutput`: Lowest you'll accept (if actual < this, swap fails)
+- Slippage tolerance: You allow price to move max 0.5% before rejecting
+
+**Why use it:**
+- Show users expected output before they confirm
+- Calculate your minimum acceptable output
+- Understand fees and price impact
+- Quote never modifies pool state
+
+**Example:**
+```bash
+curl -X POST http://localhost:3000/quote \
+  -H "Content-Type: application/json" \
+  -d '{
+    "inputToken": "ETH",
+    "outputToken": "USDC",
+    "amount": 10,
+    "slippageTolerance": 0.005
+  }'
+```
+
+---
+
+#### POST /buy
+
+Swap ETH for USDC and execute the trade.
+
+**Request:**
+```json
+{
+  "ethAmount": 10,
+  "slippageTolerance": 0.005,
+  "minUsdcOutput": 9.9
+}
+```
+
+**Response:**
+```json
+{
+  "status": "success",
+  "transaction": {
+    "type": "swap",
+    "from": "ETH",
+    "to": "USDC",
+    "inputAmount": 10,
+    "fee": 0.03,
+    "outputAmount": 9.97,
+    "priceImpact": 0.003,
+    "poolEthAfter": 1000010,
+    "poolUsdcAfter": 999990.03,
+    "message": "Swapped 10 ETH for 9.97 USDC"
+  }
+}
+```
+
+**What happens:**
+1. Calculate fee: 10 * 0.3% = 0.03 ETH
+2. Input to formula: 10 - 0.03 = 9.97 ETH
+3. Calculate output using constant product: ~9.97 USDC
+4. Update pool: +9.97 ETH, -9.97 USDC (plus fee)
+5. Return transaction details
+
+**Parameters:**
+- `ethAmount`: How much ETH you're spending
+- `slippageTolerance`: Max acceptable price movement (0.5% = 0.005)
+- `minUsdcOutput`: Optional minimum USDC you'll accept
+
+**Example:**
+```bash
+curl -X POST http://localhost:3000/buy \
+  -H "Content-Type: application/json" \
+  -d '{
+    "ethAmount": 10,
+    "slippageTolerance": 0.005
+  }'
+```
+
+---
+
+#### POST /sell
+
+Swap USDC for ETH and execute the trade.
+
+Same as `/buy` but in reverse direction (USDC → ETH).
+
+**Request:**
+```json
+{
+  "usdcAmount": 10,
+  "slippageTolerance": 0.005,
+  "minEthOutput": 9.9
+}
+```
+
+**Response:**
+```json
+{
+  "status": "success",
+  "transaction": {
+    "type": "swap",
+    "from": "USDC",
+    "to": "ETH",
+    "inputAmount": 10,
+    "fee": 0.03,
+    "outputAmount": 9.97,
+    "priceImpact": 0.003,
+    "poolEthAfter": 999990.03,
+    "poolUsdcAfter": 1000010,
+    "message": "Swapped 10 USDC for 9.97 ETH"
+  }
+}
+```
+
+**Example:**
+```bash
+curl -X POST http://localhost:3000/sell \
+  -H "Content-Type: application/json" \
+  -d '{
+    "usdcAmount": 10,
+    "slippageTolerance": 0.005
+  }'
+```
+
+---
+
+#### POST /add-liquidity
+
+Deposit tokens into the pool and become a liquidity provider.
+
+**Why provide liquidity?**
+- Earn fees from every swap in the pool
+- Example: Pool earns 100 USDC in fees, you own 1%, you earn 1 USDC
+- Risk: Impermanent loss if prices diverge significantly
+
+**Request:**
+```json
+{
+  "ethAmount": 100,
+  "usdcAmount": 100
+}
+```
+
+**Response:**
+```json
+{
+  "status": "success",
+  "liquidity": {
+    "ethAdded": 100,
+    "usdcAdded": 100,
+    "sharesIssued": 100,
+    "poolEthAfter": 1000100,
+    "poolUsdcAfter": 1000100,
+    "totalSharesAfter": 1000100,
+    "message": "Added 100 ETH and 100 USDC, received 100 LP shares"
+  }
+}
+```
+
+**What it means:**
+- `sharesIssued`: Your proof of ownership (you own `shares / totalShares` of pool)
+- After: Pool has 1000100 ETH, 1000100 USDC, 1000100 total shares
+- You can withdraw anytime by burning shares
+- You earn your % of all future swap fees
+
+**Math for first deposit:**
+- Shares = sqrt(ethAmount * usdcAmount)
+- Example: sqrt(100 * 100) = 100 shares
+
+**Math for subsequent deposits:**
+- Must deposit proportional amounts (same ratio as pool)
+- Shares = (fraction of pool increase) * totalShares
+- Example: If pool is 1000 ETH + 1000 USDC, and you add 100 ETH + 100 USDC
+  - You're adding 10% of each
+  - You get 10% of total shares
+
+**Example:**
+```bash
+curl -X POST http://localhost:3000/add-liquidity \
+  -H "Content-Type: application/json" \
+  -d '{
+    "ethAmount": 100,
+    "usdcAmount": 100
+  }'
+```
+
+---
+
+#### POST /remove-liquidity
+
+Burn LP shares and withdraw your tokens (plus your share of accumulated fees).
+
+**Request:**
+```json
+{
+  "sharesToBurn": 100
+}
+```
+
+**Response:**
+```json
+{
+  "status": "success",
+  "liquidity": {
+    "sharesBurned": 100,
+    "ethWithdrawn": 100.5,
+    "usdcWithdrawn": 100.3,
+    "poolEthAfter": 999900,
+    "poolUsdcAfter": 999900,
+    "totalSharesAfter": 999900,
+    "message": "Burned 100 shares, withdrawn 100.5 ETH and 100.3 USDC"
+  }
+}
+```
+
+**What it means:**
+- You get back your proportional share of pool
+- Example: If you own 10% (100 of 1000 shares) and pool has 1000 ETH + 1000 USDC
+  - You get 10% of each: 100 ETH + 100 USDC
+- If pool earned fees (1000.5 ETH, 1000.3 USDC after swaps):
+  - You get 100.5 ETH and 100.3 USDC (your 10% plus fees)
+
+**Why withdraw:**
+- Harvest profits (take your share of fees)
+- Exit position (stop being LP)
+- Rebalance portfolio
+
+**Example:**
+```bash
+curl -X POST http://localhost:3000/remove-liquidity \
+  -H "Content-Type: application/json" \
+  -d '{
+    "sharesToBurn": 100
+  }'
+```
+
+---
+
+### Common Questions
+
+**Q: What's the difference between /quote and /buy?**
+
+A: `/quote` is read-only (no trades execute), `/buy` executes the swap. Quote lets you see what you'll get before committing.
+
+**Q: Why do I get less than the spot price?**
+
+A: Price impact. Your swap moves the price because it changes the reserve ratio. Larger swaps = higher impact.
+
+**Q: Can I lose money as an LP?**
+
+A: Impermanent loss can occur if prices diverge sharply. Example: You add 1 ETH + 1000 USDC (1:1000 ratio). ETH price drops to 1:2000. Your LP position is now worth less than if you just held the tokens. This is "impermanent" because it recovers if price returns.
+
+**Q: What if slippage is exceeded?**
+
+A: The swap fails and you keep your tokens. This is a safety mechanism to prevent accidental bad executions.
+
+**Q: Can I swap ETH for ETH?**
+
+A: No, the pool only has ETH and USDC. You must swap between them.
 
 Treat these as starting points; as the AMM and routing logic becomes richer, these handlers will follow.
 
