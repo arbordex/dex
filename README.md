@@ -143,7 +143,7 @@ Before diving into the API, let's understand what you're interacting with.
 
 A **DEX (Decentralized Exchange)** is like a vending machine for crypto. Instead of a person deciding prices, a mathematical formula does:
 
-```
+```bash
 x * y = k
 
 Where:
@@ -153,6 +153,7 @@ Where:
 ```
 
 **How it works:**
+
 - Pool starts with 1000 ETH and 1000 USDC (k = 1,000,000)
 - You want to swap 10 ETH for USDC
 - Pool's ETH becomes 1010
@@ -193,6 +194,7 @@ The endpoints form the complete lifecycle of a DEX user:
 Get the current state of the liquidity pool.
 
 **Response:**
+
 ```json
 {
   "ethReserve": 1000000,
@@ -207,12 +209,14 @@ Get the current state of the liquidity pool.
 ```
 
 **What it means:**
+
 - `ethReserve` / `usdcReserve`: How many tokens are in the pool
 - `totalShares`: Total LP ownership units in circulation
 - `k`: Constant product (increases as fees accumulate)
 - `accumulatedFees`: Total fees collected (belongs to all LPs proportionally)
 
 **Example:**
+
 ```bash
 curl http://localhost:3000/pool/info
 ```
@@ -224,6 +228,7 @@ curl http://localhost:3000/pool/info
 Get the current spot price of ETH in terms of USDC.
 
 **Response:**
+
 ```json
 {
   "ethPriceInUsdc": 1.5,
@@ -232,11 +237,13 @@ Get the current spot price of ETH in terms of USDC.
 ```
 
 **What it means:**
+
 - Spot price is the price at which a small swap would execute
 - Formula: `price = USDC reserve / ETH reserve`
 - Larger swaps get worse prices due to price impact
 
 **Example:**
+
 ```bash
 curl http://localhost:3000/pool/price
 ```
@@ -248,6 +255,7 @@ curl http://localhost:3000/pool/price
 Get a quote for a swap WITHOUT executing it.
 
 **Request:**
+
 ```json
 {
   "inputToken": "ETH",
@@ -258,6 +266,7 @@ Get a quote for a swap WITHOUT executing it.
 ```
 
 **Response:**
+
 ```json
 {
   "inputToken": "ETH",
@@ -274,6 +283,7 @@ Get a quote for a swap WITHOUT executing it.
 ```
 
 **What it means:**
+
 - `fee`: 0.3% of input goes to liquidity providers
 - `expectedOutput`: What you'd get at current prices
 - `priceImpact`: How much worse than spot price (0.3% = bad execution)
@@ -281,12 +291,14 @@ Get a quote for a swap WITHOUT executing it.
 - Slippage tolerance: You allow price to move max 0.5% before rejecting
 
 **Why use it:**
+
 - Show users expected output before they confirm
 - Calculate your minimum acceptable output
 - Understand fees and price impact
 - Quote never modifies pool state
 
 **Example:**
+
 ```bash
 curl -X POST http://localhost:3000/quote \
   -H "Content-Type: application/json" \
@@ -305,6 +317,7 @@ curl -X POST http://localhost:3000/quote \
 Swap ETH for USDC and execute the trade.
 
 **Request:**
+
 ```json
 {
   "ethAmount": 10,
@@ -314,6 +327,7 @@ Swap ETH for USDC and execute the trade.
 ```
 
 **Response:**
+
 ```json
 {
   "status": "success",
@@ -333,6 +347,7 @@ Swap ETH for USDC and execute the trade.
 ```
 
 **What happens:**
+
 1. Calculate fee: 10 * 0.3% = 0.03 ETH
 2. Input to formula: 10 - 0.03 = 9.97 ETH
 3. Calculate output using constant product: ~9.97 USDC
@@ -340,11 +355,13 @@ Swap ETH for USDC and execute the trade.
 5. Return transaction details
 
 **Parameters:**
+
 - `ethAmount`: How much ETH you're spending
 - `slippageTolerance`: Max acceptable price movement (0.5% = 0.005)
 - `minUsdcOutput`: Optional minimum USDC you'll accept
 
 **Example:**
+
 ```bash
 curl -X POST http://localhost:3000/buy \
   -H "Content-Type: application/json" \
@@ -363,6 +380,7 @@ Swap USDC for ETH and execute the trade.
 Same as `/buy` but in reverse direction (USDC → ETH).
 
 **Request:**
+
 ```json
 {
   "usdcAmount": 10,
@@ -372,6 +390,7 @@ Same as `/buy` but in reverse direction (USDC → ETH).
 ```
 
 **Response:**
+
 ```json
 {
   "status": "success",
@@ -391,6 +410,7 @@ Same as `/buy` but in reverse direction (USDC → ETH).
 ```
 
 **Example:**
+
 ```bash
 curl -X POST http://localhost:3000/sell \
   -H "Content-Type: application/json" \
@@ -407,11 +427,13 @@ curl -X POST http://localhost:3000/sell \
 Deposit tokens into the pool and become a liquidity provider.
 
 **Why provide liquidity?**
+
 - Earn fees from every swap in the pool
 - Example: Pool earns 100 USDC in fees, you own 1%, you earn 1 USDC
 - Risk: Impermanent loss if prices diverge significantly
 
 **Request:**
+
 ```json
 {
   "ethAmount": 100,
@@ -420,6 +442,7 @@ Deposit tokens into the pool and become a liquidity provider.
 ```
 
 **Response:**
+
 ```json
 {
   "status": "success",
@@ -436,16 +459,19 @@ Deposit tokens into the pool and become a liquidity provider.
 ```
 
 **What it means:**
+
 - `sharesIssued`: Your proof of ownership (you own `shares / totalShares` of pool)
 - After: Pool has 1000100 ETH, 1000100 USDC, 1000100 total shares
 - You can withdraw anytime by burning shares
 - You earn your % of all future swap fees
 
 **Math for first deposit:**
+
 - Shares = sqrt(ethAmount * usdcAmount)
 - Example: sqrt(100 * 100) = 100 shares
 
 **Math for subsequent deposits:**
+
 - Must deposit proportional amounts (same ratio as pool)
 - Shares = (fraction of pool increase) * totalShares
 - Example: If pool is 1000 ETH + 1000 USDC, and you add 100 ETH + 100 USDC
@@ -453,6 +479,7 @@ Deposit tokens into the pool and become a liquidity provider.
   - You get 10% of total shares
 
 **Example:**
+
 ```bash
 curl -X POST http://localhost:3000/add-liquidity \
   -H "Content-Type: application/json" \
@@ -469,6 +496,7 @@ curl -X POST http://localhost:3000/add-liquidity \
 Burn LP shares and withdraw your tokens (plus your share of accumulated fees).
 
 **Request:**
+
 ```json
 {
   "sharesToBurn": 100
@@ -476,6 +504,7 @@ Burn LP shares and withdraw your tokens (plus your share of accumulated fees).
 ```
 
 **Response:**
+
 ```json
 {
   "status": "success",
@@ -492,6 +521,7 @@ Burn LP shares and withdraw your tokens (plus your share of accumulated fees).
 ```
 
 **What it means:**
+
 - You get back your proportional share of pool
 - Example: If you own 10% (100 of 1000 shares) and pool has 1000 ETH + 1000 USDC
   - You get 10% of each: 100 ETH + 100 USDC
@@ -499,11 +529,13 @@ Burn LP shares and withdraw your tokens (plus your share of accumulated fees).
   - You get 100.5 ETH and 100.3 USDC (your 10% plus fees)
 
 **Why withdraw:**
+
 - Harvest profits (take your share of fees)
 - Exit position (stop being LP)
 - Rebalance portfolio
 
 **Example:**
+
 ```bash
 curl -X POST http://localhost:3000/remove-liquidity \
   -H "Content-Type: application/json" \
@@ -601,7 +633,7 @@ Edit `src/index.ts`:
 app.post('/your-endpoint', (req, res) => {
   // Your logic here
   res.json({ message: 'It works!' });
-});
+# });
 ```
 
 Save it. The server hot-reloads. Done.
@@ -645,6 +677,119 @@ TEST_BASE_URL=https://staging.example.com npm test
 
 Tests use environment variable `TEST_BASE_URL` so you can test any server without changing code.
 
+## Using the Postman Collection
+
+A comprehensive Postman collection is included for testing and learning the Arbor DEX API.
+
+### Quick Start
+
+1. **Download Postman**: [Get it here](https://www.postman.com/downloads/)
+2. **Import the collection**:
+   - Open Postman
+   - Click **Import** (top-left)
+   - Choose **File** tab
+   - Select `postman/arbordex-dex.postman_collection.json`
+   - Click **Import**
+3. **Start the server**: `npm start` (in another terminal)
+4. **Run requests**: Click any endpoint and hit **Send**
+
+### What's Included
+
+The collection has:
+
+- ✅ **9 complete endpoints** with example requests/responses
+- ✅ **31+ test assertions** that automatically validate responses
+- ✅ **10 collection variables** for dynamic state management
+- ✅ **Pre-request scripts** that fetch pool state and calculate amounts
+- ✅ **Educational content** explaining DeFi concepts inline
+- ✅ **Error examples** showing how to handle validation failures
+
+### Testing the Collection
+
+**Run all tests at once:**
+
+1. Open the collection in Postman
+2. Click the 3-dot menu → **Run collection**
+3. Click **Run Arbor DEX...**
+4. Watch tests execute and validate all endpoints
+
+**Individual endpoint tests:**
+
+- Each request has a **Tests** tab
+- Tests validate status codes, response structure, and math (e.g., constant product formula)
+- Results appear in the **Test Results** panel after sending
+
+### What to Try
+
+**Learning path (execute in order):**
+
+1. **Health Check** – Verify server is running
+2. **Pool Info** – See initial reserves and pool state
+3. **Spot Price** – Understand the current ETH/USDC price
+4. **Quote (ETH→USDC)** – See what a swap would output (no execution)
+5. **Buy** – Execute the swap and observe reserve changes
+6. **Sell** – Execute reverse swap (USDC→ETH)
+7. **Add Liquidity** – Become an LP and earn fees
+8. **Remove Liquidity** – Withdraw your tokens plus earned fees
+9. **Error Case** – Intentionally trigger slippage rejection
+
+### Collection Variables
+
+Automatically managed variables for dynamic testing:
+
+| Variable | Purpose |
+|----------|---------|
+| `baseUrl` | Server URL (default: `http://localhost:3000`) |
+| `currentEthReserve` | Latest ETH reserve (updated after pool queries) |
+| `currentUsdcReserve` | Latest USDC reserve (updated after pool queries) |
+| `spotPrice` | Current ETH/USDC price |
+| `poolK` | Constant product value |
+| `calcUsdcAdd` | Calculated USDC for proportional liquidity addition |
+
+Pre-request scripts automatically fetch pool state, so you always have the latest values.
+
+### Testing with Newman (CLI)
+
+Run the collection from the command line:
+
+```bash
+# Install Newman (one-time)
+npm install -g newman
+
+# Run the collection
+newman run postman/arbordex-dex.postman_collection.json \
+  --environment postman/env.json \
+  --reporters cli,json
+
+# Run against different server
+newman run postman/arbordex-dex.postman_collection.json \
+  --globals '{"values":[{"key":"baseUrl","value":"http://localhost:5000"}]}'
+
+# Run specific folder
+newman run postman/arbordex-dex.postman_collection.json \
+  --folder "Liquidity Operations"
+```
+
+### Troubleshooting common Postman issues
+
+#### Tests fail with "Cannot reach server"
+
+- Make sure `npm start` is running in another terminal
+- Verify `baseUrl` variable matches your server (default `http://localhost:3000`)
+- Check server is responding: `curl http://localhost:3000/`
+
+#### Variables show undefined or empty
+
+- Pre-request scripts fetch pool state from `/pool/info` before each request
+- If scripts fail, check that server is running and `/pool/info` works
+- Look at console output: **View → Show Postman Console** to see script logs
+
+#### Slippage errors when testing
+
+- This is expected behavior! The 9th endpoint tests error handling
+- The slippage tolerance is intentionally unrealistic to trigger the validation
+- This demonstrates the safety mechanism that prevents bad trades
+
 ### Keep Code Clean
 
 Linting happens automatically when you commit:
@@ -674,7 +819,7 @@ When running with `NODE_ENV=staging` or `NODE_ENV=production`, you get:
 
 All implemented with minimal dependencies. No heavy security frameworks needed.
 
-## Troubleshooting
+## Troubleshooting common Development issues
 
 **Port 3000 is taken?**
 
