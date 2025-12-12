@@ -97,10 +97,17 @@ export function executeSwap(
 
   // Verify constant product formula holds (or improves due to fees)
   const newK = pool.ethReserve * pool.usdcReserve;
-  if (newK < pool.k) {
+  // Tolerate tiny floating point drift using absolute+relative threshold
+  const epsilon = Math.max(1e-3, 5e-15 * pool.k);
+  if (newK + epsilon < pool.k) {
     throw new Error(
       `Swap violates constant product formula. K dropped from ${pool.k} to ${newK}`
     );
+  }
+
+  // Track k growth (fees increase k over time)
+  if (newK > pool.k) {
+    pool.k = newK;
   }
 }
 
