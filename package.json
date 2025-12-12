@@ -15,7 +15,7 @@
     "lint": "eslint . --ext .ts,.js",
     "lint:fix": "eslint . --ext .ts,.js --fix",
     "test": "tsx tests/api.test.ts",
-    "prepare": "husky install config/.husky"
+    "prepare": "HUSKY=./config/.husky husky"
   },
   "keywords": [
     "dex",

@@ -679,7 +679,8 @@ app.post('/remove-liquidity', (req: Request, res: Response) => {
     const totalShares = pool.getTotalShares();
 
     // Validate share amount
-    if (!validation.validateShareAmount(sharesToBurn)) {
+    const sharesValid = validation.validateSwapAmount(sharesToBurn);
+    if (!sharesValid.valid || sharesToBurn > totalShares) {
       return res.status(400).json({
         error: `Invalid shares: ${sharesToBurn}. Must be positive and <= ${totalShares}.`,
       });

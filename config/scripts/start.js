@@ -27,7 +27,8 @@ if (isDev) {
   // Development: run with hot reloading using tsx watch
   console.log('🚀 Starting in DEVELOPMENT mode (with hot reloading)...\n');
   command = 'tsx';
-  args = ['watch', '--project', path.join(projectRoot, 'config', 'tsconfig.json'), 'src/index.ts'];
+  // tsx accepts --tsconfig (not --project). tsconfig now lives at repo root.
+  args = ['watch', '--tsconfig', path.join(projectRoot, 'tsconfig.json'), 'src/index.ts'];
 } else if (isStaging || isProd) {
   // Staging/Production: run compiled code
   if (!existsSync(distPath)) {
