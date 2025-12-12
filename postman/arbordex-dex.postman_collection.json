@@ -1,0 +1,840 @@
+{
+	"info": {
+		"_postman_id": "7a99f778-3b9e-43d3-af40-1ba8e826aa3d",
+		"name": "Arbor DEX Reference Collection",
+		"description": "# 🚀 Arbor DEX - The Complete Learning & Testing Suite\n\n[Arbor DEX](https://github.com/arbordex/dex) is a teaching-focused automated market maker (AMM) with a single ETH/USDC liquidity pool. This collection provides everything you need to understand and test AMM mechanics, including dynamic scripts, pre-populated example responses, comprehensive tests, and deep educational content.\n\n## ✨ What's Included\n\n### Core Features\n\n- **Health Check**: Verify server connectivity and discover all endpoints\n    \n- **Pool Info**: Inspect reserves, LP shares, invariant (k), fees, and spot price\n    \n- **Spot Price**: Get current ETH/USDC exchange rate based on pool reserves\n    \n- **Read-Only Quotes**: Calculate swap outputs without executing (supports both directions)\n    \n- **Swap Execution**: Execute buys (ETH→USDC) and sells (USDC→ETH) with slippage protection\n    \n- **Liquidity Operations**: Add proportional liquidity to mint LP shares; remove to burn shares and withdraw tokens/fees\n    \n- **Safety Rails**: Input validation, min/max trade sizes, slippage bounds, price-impact warnings, K invariant verification\n    \n\n### Advanced Features\n\n- **Dynamic Scripts**: Collection-level and request-level pre-request & test scripts\n    \n- **State Tracking**: Automatic pool state capture and variable management\n    \n- **Educational Content**: 10+ DeFi concepts explained inline\n    \n- **Example Responses**: 10 detailed response examples with realistic data\n    \n- **Comprehensive Tests**: 31+ test assertions across all endpoints\n    \n- **Front-Running Protection**: Slippage tolerance and minimum output checks\n    \n\n## 🎯 Quick Start\n\n1. **Set Base URL**: `{{baseUrl}}` defaults to `http://localhost:3000`\n    \n2. **Start Server**: Run `npm start` in the dex directory\n    \n3. **Explore Collection**: Each request has detailed documentation and examples\n    \n4. **Follow Learning Path**: Execute requests in order to understand AMM mechanics\n    \n5. **Run Tests**: Use Postman's Test Results to verify expected behavior\n    \n\n## 📚 Learning Path\n\n### Beginner (Understanding Pool Mechanics)\n\n1. **Health Check** - Verify server is running\n    \n2. **Pool State** - See initial reserves, k, shares, and fees\n    \n3. **Spot Price** - Understand the price based on reserves\n    \n4. **Read Quote** - See what happens without executing\n    \n\n### Intermediate (Executing Trades)\n\n1. **Quote ETH→USDC** - Calculate expected output\n    \n2. **Buy (ETH→USDC)** - Execute the swap and observe reserve changes\n    \n3. **Get Pool State Again** - See how reserves changed\n    \n4. **Quote USDC→ETH** - Calculate reverse swap output\n    \n5. **Sell (USDC→ETH)** - Execute reverse swap\n    \n\n### Advanced (Liquidity Provision)\n\n1. **Get Pool State** - Check current reserves before adding liquidity\n    \n2. **Add Liquidity** - Deposit proportional tokens and mint shares\n    \n3. **Get Pool State** - Verify reserves increased and shares minted\n    \n4. **Remove Liquidity** - Withdraw proportional tokens plus your share of fees\n    \n5. **Verify Profit** - Check earned fees in the response\n    \n\n## 🔑 Key Concepts\n\n### The Constant Product Formula\n\n```\nx × y = k\nWhere:\n  x = ETH reserve (current balance in pool)\n  y = USDC reserve (current balance in pool)\n  k = constant (product must never decrease, can grow from fees)\n\n ```\n\nThis is the core invariant enforced by all AMMs. When someone swaps tokens:\n\n1. Reserves change (x increases, y decreases or vice versa)\n    \n2. The product k must remain constant or increase (due to fees)\n    \n3. If the product would decrease, the swap is rejected\n    \n\n### Fee Mechanics (0.3%)\n\n**How fees work:**\n\n1. User submits 100 ETH for swap\n    \n2. Fee charged: 100 × 0.003 = 0.3 ETH\n    \n3. Amount entering AMM: 99.7 ETH\n    \n4. User receives output based on 99.7 ETH\n    \n5. The 0.3 ETH stays in reserves, benefiting all LPs\n    \n\n### Slippage & Price Impact\n\n**Slippage** = Difference between quote and actual execution price  \n**Why it happens:**\n\n- Block time (\\~12 seconds on Ethereum)\n    \n- Other txs can execute between submission and execution\n    \n- Pool reserves change with each transaction\n    \n- Your output amount might be different when executed\n    \n\n**Price Impact** = How much your trade moves the market price\n\n- Calculated as: (spotPrice - executionPrice) / spotPrice × 100%\n    \n- Higher impact = larger trade relative to pool liquidity\n    \n- Can offset with split trades or use different pools\n    \n\n### LP Shares & Ownership\n\n**LP shares** = Proof of ownership in the liquidity pool\n\n- You own `yourShares / totalShares` of the pool\n    \n- When you withdraw, you get that percentage of reserves\n    \n- Fees accumulate in reserves, increasing share value\n    \n- Your share of fees = (yourShares / totalShares) × totalFees\n    \n\n### Impermanent Loss\n\n**What is it?** Loss incurred when you provide liquidity and the price moves\n\n**Example:**\n\n```\nInitial Deposit:  100 ETH @ $1,000 = $100,000\n                  100,000 USDC @ $1.00 = $100,000\n                  Total Value: $200,000\nETH rises to $1,500:\nYour LP Value:    ~81.65 ETH @ $1,500 = $122,475\n                  ~122,475 USDC @ $1.00 = $122,475\n                  Total Value: ~$244,950 (if no fees)\nHODL Value:       100 ETH @ $1,500 = $150,000\n                  100,000 USDC @ $1.00 = $100,000\n                  Total Value: $250,000\nImpermanent Loss: ~$5,050 (2.02%)\n\n ```\n\n**Key points:**\n\n- Called \"impermanent\" because it only matters when you withdraw\n    \n- Can be offset by accumulated trading fees\n    \n- Higher volatility = higher impermanent loss risk\n    \n- Happens when price diverges from entry point\n    \n\n## 🧪 Testing & Validation\n\nThis collection includes comprehensive tests that validate:\n\n- ✅ Status codes (200 for success, 400/422 for errors)\n    \n- ✅ Response structure (required properties present)\n    \n- ✅ Constant product formula: k = x × y\n    \n- ✅ Fee calculations (0.3% of input)\n    \n- ✅ Slippage tolerance enforcement\n    \n- ✅ Pool reserve consistency\n    \n- ✅ Mathematical correctness of all operations\n    \n\n## 🔐 Security & Safety Features\n\n1. **K Invariant Verification**: Ensures product never decreases (fees allowed)\n    \n2. **Slippage Protection**: Rejects swaps if output < minimum threshold\n    \n3. **Reserve Floor Checks**: Prevents draining pool below minimum\n    \n4. **Input Validation**: Rejects invalid amounts, negative numbers, wrong types\n    \n5. **Ratio Matching**: Liquidity additions must be proportional to current ratio\n    \n6. **Price Impact Warnings**: Alerts on high slippage (> 1%)\n    \n\n## 📊 API Responses\n\nEvery endpoint includes:\n\n- ✅ Detailed descriptions in request documentation\n    \n- ✅ Complete example responses (2-3 per endpoint)\n    \n- ✅ Step-by-step math explanations\n    \n- ✅ Error cases and how to handle them\n    \n- ✅ Use cases and best practices\n    \n\n## 🚨 Error Handling\n\nCommon error responses:\n\n- **400 Bad Request**: Invalid input (missing fields, wrong types, out of range)\n    \n- **422 Unprocessable Entity**: Validation fails (slippage exceeded, ratio mismatch, insufficient reserves)\n    \n- **500 Server Error**: Unexpected issue on backend\n    \n\nAll errors include a descriptive message explaining what went wrong.\n\n## 🎓 Educational Value\n\nThis collection teaches:\n\n- ✅ How automated market makers (AMMs) work\n    \n- ✅ Constant product formula and why it matters\n    \n- ✅ Fee mechanics and liquidity provider rewards\n    \n- ✅ Slippage, price impact, and front-running\n    \n- ✅ LP shares, ownership, and proportional withdrawal\n    \n- ✅ Impermanent loss and how to calculate it\n    \n- ✅ Real-world DEX considerations and risks\n    \n- ✅ Smart contract design patterns for trading\n    \n\n## 💡 Tips for Success\n\n1. **Always quote first**: Use `/quote` before executing swaps to verify amounts\n    \n2. **Set appropriate slippage**: 0.5% for normal conditions, higher for volatile markets\n    \n3. **Monitor K invariant**: Verify k grows (or stays constant) after each operation\n    \n4. **Check reserves before large trades**: Avoid executing swaps in low-liquidity pools\n    \n5. **Understand impermanent loss**: Before providing liquidity, understand the risks\n    \n6. **Run tests**: Use Postman's test runner to validate all responses\n    \n7. **Try both directions**: Execute swaps in both directions to fully understand mechanics\n    \n\n## 🔗 Variable Management\n\nCollection automatically manages:\n\n- `baseUrl`: Server base URL (default: [http://localhost:3000](http://localhost:3000))\n    \n- `currentEthReserve`: Current ETH reserve (updated after each pool query)\n    \n- `currentUsdcReserve`: Current USDC reserve (updated after each pool query)\n    \n- `calcUsdcAdd`: Calculated USDC amount for liquidity (auto-computed)\n    \n- `ethReserve`, `usdcReserve`, `totalShares`, `poolK`: Pool state tracking\n    \n- `spotPrice`: Current ETH/USDC price\n    \n- `timestamp`: Request timestamp for tracking\n    \n\n## 📖 Further Learning\n\n**Concepts to explore:**\n\n- Constant product AMMs vs. Stableswap curves\n    \n- Multi-hop swaps and routing algorithms\n    \n- Governance and protocol fees\n    \n- Flash loans and MEV\n    \n- Liquidity mining and yield farming\n    \n- Cross-chain AMMs and bridges\n    \n\n**Real-world examples:**\n\n- Uniswap v2/v3 (the most popular AMM)\n    \n- Curve Finance (stablecoin-optimized)\n    \n- Balancer (multi-token pools)\n    \n- Dodo (hybrid model)\n    \n\n---\n\n**Made with 💚 for DeFi learners everywhere**\n\nUse this collection to build intuition about how DEXes actually work. Every parameter matters, every formula has a reason, and understanding AMMs opens doors to advanced DeFi strategies.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "874932",
+		"_collection_link": "https://www.postman.com/sayak-sarkar/workspace/my-workspace/collection/874932-7a99f778-3b9e-43d3-af40-1ba8e826aa3d?action=share&source=collection_link&creator=874932"
+	},
+	"item": [
+		{
+			"name": "0. Health Check",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test(\"Response contains welcome message\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.message).to.include(\"Welcome to Arbordex\");",
+							"    pm.expect(jsonData).to.have.property(\"endpoints\");",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						""
+					]
+				},
+				"description": "## Verifies Server Health & Lists Endpoints\n\nA simple health check endpoint that confirms the server is running and returns all available endpoints.\n\n### Purpose\n- Verify the Arbor DEX server is up and responding\n- Get a complete list of all available API endpoints\n- Confirm you can reach the server\n\n### Response Example\n```json\n{\n  \"message\": \"👋 Welcome to Arbordex - Your DEX Learning Playground\",\n  \"version\": \"1.0.0\",\n  \"endpoints\": {\n    \"pool\": \"GET /pool/info\",\n    \"price\": \"GET /pool/price\",\n    \"quote\": \"POST /quote\",\n    \"buy\": \"POST /buy\",\n    \"sell\": \"POST /sell\",\n    \"addLiquidity\": \"POST /add-liquidity\",\n    \"removeLiquidity\": \"POST /remove-liquidity\"\n  },\n  \"docs\": \"See README.md for detailed documentation\"\n}\n```\n\n### Use Cases\n1. **Initial connectivity check**: First request to verify server is running\n2. **Endpoint discovery**: Get list of all available operations\n3. **Health monitoring**: Can be polled in production for uptime monitoring\n4. **Version checking**: Verify you're running the expected API version\n\n### No Authentication Required\nThis is a public endpoint without any authentication or special headers required."
+			},
+			"response": [
+				{
+					"name": "Success",
+					"originalRequest": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								""
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json; charset=utf-8"
+						}
+					],
+					"cookie": [],
+					"body": "{\n    \"message\": \"👋 Welcome to Arbordex - Your DEX Learning Playground\",\n    \"version\": \"1.0.0\",\n    \"endpoints\": {\n        \"pool\": \"GET /pool/info\",\n        \"price\": \"GET /pool/price\",\n        \"quote\": \"POST /quote\",\n        \"buy\": \"POST /buy\",\n        \"sell\": \"POST /sell\",\n        \"addLiquidity\": \"POST /add-liquidity\",\n        \"removeLiquidity\": \"POST /remove-liquidity\"\n    },\n    \"docs\": \"See README.md for detailed documentation\"\n}"
+				}
+			]
+		},
+		{
+			"name": "1. Get Pool State",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var jsonData = pm.response.json();",
+							"",
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test(\"Pool has valid reserves\", function () {",
+							"    pm.expect(jsonData.ethReserve).to.be.above(0);",
+							"    pm.expect(jsonData.usdcReserve).to.be.above(0);",
+							"    pm.expect(jsonData.k).to.be.above(0);",
+							"});",
+							"",
+							"pm.test(\"Constant product formula valid\", function () {",
+							"    const calculated = jsonData.ethReserve * jsonData.usdcReserve;",
+							"    pm.expect(Math.abs(calculated - jsonData.k)).to.be.below(0.01);",
+							"});",
+							"",
+							"// Save state to variables for subsequent logic",
+							"pm.collectionVariables.set(\"currentEthReserve\", jsonData.ethReserve);",
+							"pm.collectionVariables.set(\"currentUsdcReserve\", jsonData.usdcReserve);",
+							"pm.collectionVariables.set(\"poolK\", jsonData.k);",
+							"console.log(\"Pool State: ETH=\", jsonData.ethReserve, \"USDC=\", jsonData.usdcReserve, \"k=\", jsonData.k);"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/pool/info",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"pool",
+						"info"
+					]
+				},
+				"description": "## Pool State Information\n\nFetches the current state of the ETH/USDC liquidity pool.\n\n### What You Get\n\n- **ethReserve**: Amount of ETH in the pool\n- **usdcReserve**: Amount of USDC in the pool\n- **totalShares**: Total LP (Liquidity Provider) shares issued\n- **k**: The constant product invariant (ethReserve × usdcReserve)\n- **accumulatedFees**: Object with `eth` and `usdc` fee totals\n\n### The Constant Product Formula\n\n```\nx × y = k\n\nWhere:\n  x = ethReserve\n  y = usdcReserve\n  k = constant (must never decrease, can grow due to fees)\n```\n\nThis is the core of the Automated Market Maker (AMM). When someone swaps tokens, the reserves change but the product stays constant (or grows slightly due to the 0.3% fee).\n\n### Use Cases\n\n- Check pool depth before executing a large trade\n- Calculate price impact for a proposed swap\n- Monitor liquidity changes over time\n- Verify the constant product formula (k = x × y)\n- Track accumulated fees\n\n### Understanding LP Shares\n\nLP shares represent ownership in the pool. If you own 10% of total shares, you can withdraw 10% of the reserves (including accumulated fees)."
+			},
+			"response": [
+				{
+					"name": "Initial State",
+					"originalRequest": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/pool/info",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"pool",
+								"info"
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json; charset=utf-8"
+						}
+					],
+					"cookie": [],
+					"body": "{\n    \"ethReserve\": 1000000,\n    \"usdcReserve\": 1000000,\n    \"totalShares\": 1000000,\n    \"k\": 1000000000000,\n    \"accumulatedFees\": {\n        \"eth\": 0,\n        \"usdc\": 0\n    }\n}"
+				}
+			]
+		},
+		{
+			"name": "2. Get Spot Price",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var jsonData = pm.response.json();",
+							"var ethRes = parseFloat(pm.collectionVariables.get(\"currentEthReserve\"));",
+							"var usdcRes = parseFloat(pm.collectionVariables.get(\"currentUsdcReserve\"));",
+							"",
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test(\"Price calculation matches reserves\", function () {",
+							"    var expectedPrice = usdcRes / ethRes;",
+							"    pm.expect(jsonData.ethPriceInUsdc).to.be.closeTo(expectedPrice, 0.000001);",
+							"});",
+							"",
+							"pm.collectionVariables.set(\"spotPrice\", jsonData.ethPriceInUsdc);"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/pool/price",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"pool",
+						"price"
+					]
+				},
+				"description": "## Spot Price\n\nReturns the current mid-market price of ETH in USDC based on the pool's reserves.\n\n### How It's Calculated\n\n```\nPrice = usdcReserve / ethReserve\n```\n\nThis is the instantaneous price without considering fees or slippage. It represents the theoretical exchange rate at this moment.\n\n### Important Notes\n\n- **No fees included**: This is the raw price from the reserves\n- **No slippage**: Actual trades will experience price impact\n- **Mid-market rate**: The theoretical price before executing a swap\n- **Changes with every trade**: As reserves shift, so does the spot price\n\n### Use Cases\n\n- Quick price reference before requesting a quote\n- Compare with external market prices\n- Monitor pool equilibrium\n- Calculate theoretical values without fees\n\n### Spot Price vs Quote\n\n- **Spot Price**: Theoretical rate (no fees, infinite liquidity assumption)\n- **Quote**: Actual output accounting for fees (0.3%) and price impact"
+			},
+			"response": [
+				{
+					"name": "Initial Price (1:1)",
+					"originalRequest": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/pool/price",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"pool",
+								"price"
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json; charset=utf-8"
+						}
+					],
+					"cookie": [],
+					"body": "{\n    \"ethPriceInUsdc\": 1,\n    \"interpretation\": \"1 ETH = 1.000000 USDC\"\n}"
+				}
+			]
+		},
+		{
+			"name": "3. Quote Swap (ETH -> USDC)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var jsonData = pm.response.json();",
+							"var inputAmount = 10;",
+							"var feePercent = 0.003;",
+							"",
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test(\"Fee calculation is correct (0.3%)\", function () {",
+							"    var expectedFee = inputAmount * feePercent;",
+							"    pm.expect(jsonData.fee).to.be.closeTo(expectedFee, 0.000001);",
+							"});",
+							"",
+							"pm.test(\"Minimum output respects slippage tolerance\", function () {",
+							"    var tolerance = jsonData.slippageTolerance / 100;",
+							"    var calcMin = jsonData.expectedOutput * (1 - tolerance);",
+							"    pm.expect(jsonData.minimumOutput).to.be.closeTo(calcMin, 0.0001);",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"inputToken\": \"ETH\",\n    \"outputToken\": \"USDC\",\n    \"amount\": 10,\n    \"slippageTolerance\": 0.005\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{baseUrl}}/quote",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"quote"
+					]
+				},
+				"description": "## Read-Only Swap Quote\n\nCalculates the expected output for a swap without executing it. This is a **read-only** operation that helps you understand what would happen if you executed a swap.\n\n### Request Body\n\n```json\n{\n  \"inputToken\": \"ETH\",      // or \"USDC\"\n  \"outputToken\": \"USDC\",    // or \"ETH\"\n  \"amount\": 10,             // Input amount\n  \"slippageTolerance\": 0.005 // Optional, default 0.5%\n}\n```\n\n### Response Fields\n\n- **inputAmount**: Amount of input token\n- **expectedOutput**: Expected output (after 0.3% fee)\n- **fee**: Fee charged (0.3% of input)\n- **priceImpact**: How much the trade moves the price (%)\n- **minimumOutput**: Minimum acceptable output after slippage\n- **effectivePrice**: Actual rate including fees\n\n### How Quotes Are Calculated\n\n1. **Take 0.3% fee** from input: `inputAfterFee = input × 0.997`\n2. **Apply constant product formula**:\n   ```\n   newReserveOut = (reserveOut × reserveIn) / (reserveIn + inputAfterFee)\n   output = reserveOut - newReserveOut\n   ```\n3. **Calculate slippage floor**: `minimumOutput = output × (1 - slippageTolerance)`"
+			},
+			"response": [
+				{
+					"name": "Quote for 10 ETH",
+					"originalRequest": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"inputToken\": \"ETH\",\n    \"outputToken\": \"USDC\",\n    \"amount\": 10,\n    \"slippageTolerance\": 0.005\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/quote",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"quote"
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json; charset=utf-8"
+						}
+					],
+					"cookie": [],
+					"body": "{\n    \"inputToken\": \"ETH\",\n    \"outputToken\": \"USDC\",\n    \"inputAmount\": 10,\n    \"fee\": 0.03,\n    \"amountAfterFee\": 9.97,\n    \"expectedOutput\": 9.9699,\n    \"priceImpact\": 0.003,\n    \"slippageTolerance\": 0.5,\n    \"minimumOutput\": 9.92005,\n    \"warning\": null,\n    \"message\": \"Expected 9.9699 USDC for 10 ETH, accept minimum 9.92005\"\n}"
+				}
+			]
+		},
+		{
+			"name": "4. Execute Buy (ETH -> USDC)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var jsonData = pm.response.json();",
+							"var oldEth = parseFloat(pm.collectionVariables.get(\"currentEthReserve\"));",
+							"var oldUsdc = parseFloat(pm.collectionVariables.get(\"currentUsdcReserve\"));",
+							"",
+							"pm.test(\"Transaction successful\", function () {",
+							"    pm.response.to.have.status(200);",
+							"    pm.expect(jsonData.status).to.eql(\"success\");",
+							"});",
+							"",
+							"pm.test(\"Pool reserves updated correctly\", function () {",
+							"    pm.expect(jsonData.transaction.poolEthAfter).to.be.above(oldEth);",
+							"    pm.expect(jsonData.transaction.poolUsdcAfter).to.be.below(oldUsdc);",
+							"});",
+							"",
+							"// Update variables for next steps",
+							"pm.collectionVariables.set(\"currentEthReserve\", jsonData.transaction.poolEthAfter);",
+							"pm.collectionVariables.set(\"currentUsdcReserve\", jsonData.transaction.poolUsdcAfter);"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"ethAmount\": 10,\n    \"slippageTolerance\": 0.01\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{baseUrl}}/buy",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"buy"
+					]
+				},
+				"description": "## Execute Buy (ETH -> USDC)\n\nSwaps ETH for USDC with slippage protection. This **modifies pool state**.\n\n### Request Body\n\n```json\n{\n  \"ethAmount\": 10,           // ETH input\n  \"slippageTolerance\": 0.005 // Optional, default 0.5%\n}\n```\n\n### How the Swap Works\n\n1. **Validate inputs**: Check amounts are within min/max limits\n2. **Calculate output**: Use constant product formula with 0.3% fee\n3. **Check slippage**: Ensure output ≥ minimum threshold\n4. **Update reserves**: Add ETH, remove USDC\n5. **Verify K invariant**: Ensure `k` didn't decrease (allows growth from fees)"
+			},
+			"response": [
+				{
+					"name": "Successful Swap",
+					"originalRequest": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"ethAmount\": 10,\n    \"slippageTolerance\": 0.01\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/buy",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"buy"
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json; charset=utf-8"
+						}
+					],
+					"cookie": [],
+					"body": "{\n    \"status\": \"success\",\n    \"transaction\": {\n        \"type\": \"swap\",\n        \"from\": \"ETH\",\n        \"to\": \"USDC\",\n        \"inputAmount\": 10,\n        \"fee\": 0.03,\n        \"outputAmount\": 9.9699,\n        \"priceImpact\": 0.003,\n        \"poolEthAfter\": 1000009.97,\n        \"poolUsdcAfter\": 999990.0301,\n        \"message\": \"Swapped 10 ETH for 9.9699 USDC\"\n    }\n}"
+				}
+			]
+		},
+		{
+			"name": "5. Execute Sell (USDC -> ETH)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Swap executed successfully\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.response.to.have.status(200);",
+							"    pm.expect(jsonData.status).to.eql(\"success\");",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"usdcAmount\": 10000,\n    \"slippageTolerance\": 0.01\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{baseUrl}}/sell",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"sell"
+					]
+				},
+				"description": "## Execute Sell (USDC -> ETH)\n\nSwaps USDC for ETH with slippage protection. This **modifies pool state**.\n\n### Request Body\n\n```json\n{\n  \"usdcAmount\": 10000,       // USDC input\n  \"slippageTolerance\": 0.005 // Optional, default 0.5%\n}\n```\n\n### Swap Mechanics\n\nSame constant product formula as ETH→USDC, but in reverse direction."
+			},
+			"response": [
+				{
+					"name": "Sell Success",
+					"originalRequest": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"usdcAmount\": 10000,\n    \"slippageTolerance\": 0.01\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/sell",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"sell"
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json; charset=utf-8"
+						}
+					],
+					"cookie": [],
+					"body": "{\n    \"status\": \"success\",\n    \"transaction\": {\n        \"type\": \"swap\",\n        \"from\": \"USDC\",\n        \"to\": \"ETH\",\n        \"inputAmount\": 10000,\n        \"fee\": 30,\n        \"outputAmount\": 9.95,\n        \"priceImpact\": 0.995,\n        \"poolEthAfter\": 999999.98,\n        \"poolUsdcAfter\": 1010010,\n        \"message\": \"Swapped 10000 USDC for 9.95 ETH\"\n    }\n}"
+				}
+			]
+		},
+		{
+			"name": "6. Add Liquidity (Dynamic)",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"pm.sendRequest(pm.collectionVariables.get(\"baseUrl\") + \"/pool/info\", function (err, response) {",
+							"    if (!err) {",
+							"        var res = response.json();",
+							"        var ethRes = res.ethReserve;",
+							"        var usdcRes = res.usdcReserve;",
+							"        var ethToAdd = 100;",
+							"        var usdcToAdd = ethToAdd * (usdcRes / ethRes);",
+							"        pm.collectionVariables.set(\"calcUsdcAdd\", usdcToAdd);",
+							"    }",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var jsonData = pm.response.json();",
+							"pm.test(\"Shares were issued\", function () {",
+							"    pm.expect(jsonData.liquidity.sharesIssued).to.be.above(0);",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"ethAmount\": 100,\n    \"usdcAmount\": {{calcUsdcAdd}}\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{baseUrl}}/add-liquidity",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"add-liquidity"
+					]
+				},
+				"description": "## Add Liquidity\n\nAdds 100 ETH and mathematically calculated USDC to match the new pool ratio. Uses dynamic pre-request script to fetch current pool state and calculate correct USDC amount.\n\n### How It Works\n\n**First Deposit (Bootstrap):**\n```\nshares = sqrt(ethAmount × usdcAmount)\n```\n\n**Subsequent Deposits:**\n```\nethRatio = ethAmount / currentEthReserve\nusdcRatio = usdcAmount / currentUsdcReserve\n\n// Must match within tolerance\nif (abs(ethRatio - usdcRatio) > tolerance) {\n  throw \"Ratio mismatch\"\n}\n\nshares = (ethAmount / currentEthReserve) × totalShares\n```"
+			},
+			"response": [
+				{
+					"name": "Add Liquidity Success",
+					"originalRequest": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"ethAmount\": 100,\n    \"usdcAmount\": 99.998\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/add-liquidity",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"add-liquidity"
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json; charset=utf-8"
+						}
+					],
+					"cookie": [],
+					"body": "{\n    \"status\": \"success\",\n    \"liquidity\": {\n        \"ethAdded\": 100,\n        \"usdcAdded\": 99.998,\n        \"sharesIssued\": 99.999,\n        \"poolEthAfter\": 1000109.97,\n        \"poolUsdcAfter\": 1000090.028,\n        \"totalSharesAfter\": 1000099.999,\n        \"message\": \"Added 100 ETH and 99.998 USDC, received 99.999 LP shares\"\n    }\n}"
+				}
+			]
+		},
+		{
+			"name": "7. Remove Liquidity",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var jsonData = pm.response.json();",
+							"pm.test(\"Withdrawal successful\", function () {",
+							"    pm.response.to.have.status(200);",
+							"    pm.expect(jsonData.liquidity.ethWithdrawn).to.be.above(0);",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"sharesToBurn\": 50\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{baseUrl}}/remove-liquidity",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"remove-liquidity"
+					]
+				},
+				"description": "## Remove Liquidity\n\nRemoves 50 shares worth of liquidity, burning shares and withdrawing proportional tokens.\n\n### How It Works\n\n```\nethToWithdraw = (sharesToBurn / totalShares) × ethReserve\nusdcToWithdraw = (sharesToBurn / totalShares) × usdcReserve\n\n// Burn shares\ntotalShares -= sharesToBurn\n\n// Update reserves\nethReserve -= ethToWithdraw\nusdcReserve -= usdcToWithdraw\n```\n\n### Fee Distribution\n\nWhen you withdraw, you receive:\n- Your **proportional share of reserves**\n- Your **proportional share of accumulated fees**"
+			},
+			"response": [
+				{
+					"name": "Remove Liquidity Success",
+					"originalRequest": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"sharesToBurn\": 50\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/remove-liquidity",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"remove-liquidity"
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json; charset=utf-8"
+						}
+					],
+					"cookie": [],
+					"body": "{\n    \"status\": \"success\",\n    \"liquidity\": {\n        \"sharesBurned\": 50,\n        \"ethWithdrawn\": 50.0005,\n        \"usdcWithdrawn\": 50.0000,\n        \"poolEthAfter\": 1000059.9695,\n        \"poolUsdcAfter\": 1000040.028,\n        \"totalSharesAfter\": 1000049.999,\n        \"message\": \"Burned 50 shares, withdrawn 50.0005 ETH and 50.0000 USDC\"\n    }\n}"
+				}
+			]
+		},
+		{
+			"name": "8. Error: Slippage Exceeded",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Returns 400 Bad Request\", function () {",
+							"    pm.response.to.have.status(400);",
+							"});",
+							"pm.test(\"Error indicates slippage tolerance is too strict\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.error).to.include(\"Slippage tolerance too strict\");",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"ethAmount\": 10,\n    \"slippageTolerance\": 0.0000001\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{baseUrl}}/buy",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"buy"
+					]
+				},
+				"description": "## Tests validation failure when slippage tolerance is too strict.\n\nDemonstrates the slippage protection mechanism by requesting an unrealistic slippage tolerance."
+			},
+			"response": [
+				{
+					"name": "Slippage Error",
+					"originalRequest": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"ethAmount\": 10,\n    \"slippageTolerance\": 0.0000001\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/buy",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"buy"
+							]
+						}
+					},
+					"status": "Bad Request",
+					"code": 400,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json; charset=utf-8"
+						}
+					],
+					"cookie": [],
+					"body": "{\n    \"error\": \"Slippage tolerance too strict: 0.000%. Expected output 9.9699 USDC, minimum acceptable 9.96989 USDC.\"\n}"
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Collection-level pre-request script",
+					"// Runs before every request in the collection",
+					"",
+					"// Set timestamp for request tracking",
+					"pm.collectionVariables.set('timestamp', new Date().toISOString());",
+					"",
+					"// Log request info",
+					"console.log('🚀 Request:', pm.info.requestName);",
+					"console.log('⏰ Timestamp:', pm.collectionVariables.get('timestamp'));"
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Collection-level test script",
+					"// Runs after every request in the collection",
+					"",
+					"// Basic validation that applies to all requests",
+					"pm.test('Response time is acceptable', function() {",
+					"    pm.expect(pm.response.responseTime).to.be.below(5000);",
+					"});",
+					"",
+					"pm.test('Content-Type is JSON', function() {",
+					"    pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json');",
+					"});",
+					"",
+					"// Log response status",
+					"console.log('✅ Status:', pm.response.code, pm.response.status);"
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:3000",
+			"type": "string"
+		},
+		{
+			"key": "currentEthReserve",
+			"value": "0",
+			"type": "string"
+		},
+		{
+			"key": "currentUsdcReserve",
+			"value": "0",
+			"type": "string"
+		},
+		{
+			"key": "calcUsdcAdd",
+			"value": "100",
+			"type": "string"
+		},
+		{
+			"key": "ethReserve",
+			"value": "1000000",
+			"type": "string"
+		},
+		{
+			"key": "usdcReserve",
+			"value": "1000000",
+			"type": "string"
+		},
+		{
+			"key": "totalShares",
+			"value": "1000000",
+			"type": "string"
+		},
+		{
+			"key": "poolK",
+			"value": "1000000000000",
+			"type": "string"
+		},
+		{
+			"key": "spotPrice",
+			"value": "1",
+			"type": "string"
+		},
+		{
+			"key": "timestamp",
+			"value": "",
+			"type": "string"
+		}
+	]
+}
